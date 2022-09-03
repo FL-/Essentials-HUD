@@ -1,2 +1,8 @@
-# Essentials-HUD
-Displays a HUD with the party icons, HP bars, tone (for status) and some small text. Essentials script.
+# Simple HUD
+This script is for Pokémon Essentials. It displays a simple HUD with the party icons and some small text.
+
+## Screens
+![](Screens/screen.png)
+
+## Installation
+Follow the [Script](/Script.rb) instructions.
