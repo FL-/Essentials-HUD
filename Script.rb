@@ -1,53 +1,63 @@
 #===============================================================================
-# * Simple HUD Optimized - by FL (Credits will be apreciated)
+# * Simple HUD - by FL (Credits will be apreciated)
 #===============================================================================
 #
 # This script is for Pokémon Essentials. It displays a simple HUD with the
-# party icons, HP Bars and some small text.
+# party icons, HP bars and some small text.
 #
-#===============================================================================
+#== INSTALLATION ===============================================================
 #
 # To this script works, put it above main.
 #
 #===============================================================================
+
+if defined?(PluginManager) && !PluginManager.installed?("Simple HUD")
+  PluginManager.register({                                                 
+    :name    => "Simple HUD",                                        
+    :version => "2.1.2",                                                     
+    :link    => "https://www.pokecommunity.com/showthread.php?t=390640",             
+    :credits => "FL"
+  })
+end
+
 class Spriteset_Map
   class HUD
     # If you wish to use a background picture, put the image path below, like
-    # BGPATH="Graphics/Pictures/battleMessage". I recommend a 512x64 picture
-    BGPATH=""
+    # BG_PATH="Graphics/Pictures/battleMessage". I recommend a 512x64 picture
+    BG_PATH=""
 
     # Make as 'false' to don't show the blue bar
-    USEBAR=true
+    USE_BAR=true
 
     # Make as 'true' to draw the HUD at bottom
-    DRAWATBOTTOM=false
+    DRAW_AT_BOTTOM=false
 
     # Make as 'true' to only show HUD in the pause menu
-    DRAWONLYINMENU=false
+    DRAW_ONLY_IN_MENU=false
 
     # Make as 'false' to don't show the hp bars
-    SHOWHPBARS=true
+    SHOW_HP_BARS=true
 
     # When above 0, only displays HUD when this switch is on.
-    SWITCHNUMBER = 0
+    SWITCH_NUMBER = 0
 
     # Lower this number = more lag.
-    FRAMESPERUPDATE=2
+    FRAMES_PER_UPDATE=2
 
     # The size of drawable content.
-    BARHEIGHT = 64
+    BAR_HEIGHT = 64
 
     def initialize(viewport1)
       @viewport1 = viewport1
       @sprites = {}
-      @yposition = DRAWATBOTTOM ? Graphics.height-64 : 0
+      @yposition = DRAW_AT_BOTTOM ? Graphics.height-64 : 0
     end
 
     def showHUD?
       return (
-        $Trainer &&
-        (SWITCHNUMBER<=0 || $game_switches[SWITCHNUMBER]) &&
-        (!DRAWONLYINMENU || $game_temp.in_menu)
+        $player &&
+        (SWITCH_NUMBER<=0 || $game_switches[SWITCH_NUMBER]) &&
+        (!DRAW_ONLY_IN_MENU || $game_temp.in_menu)
       )
     end
 
@@ -60,18 +70,18 @@ class Spriteset_Map
       @partyHP = Array.new(6, 0)
       @partyTotalHP = Array.new(6, 0)
 
-      if USEBAR
+      if USE_BAR
         @sprites["bar"]=IconSprite.new(0,@yposition,@viewport1)
-        barBitmap = Bitmap.new(Graphics.width,BARHEIGHT)
+        barBitmap = Bitmap.new(Graphics.width,BAR_HEIGHT)
         barRect = Rect.new(0,0,barBitmap.width,barBitmap.height)
         barBitmap.fill_rect(barRect,Color.new(128,128,192))
         @sprites["bar"].bitmap = barBitmap
       end
 
-      drawBarFromPath = BGPATH != ""
+      drawBarFromPath = BG_PATH != ""
       if drawBarFromPath
         @sprites["bgbar"]=IconSprite.new(0,@yposition,@viewport1)
-        @sprites["bgbar"].setBitmap(BGPATH)
+        @sprites["bgbar"].setBitmap(BG_PATH)
       end
 
       @currentTexts = textsDefined
@@ -80,12 +90,12 @@ class Spriteset_Map
       for i in 0...6
         x = 16+64*i
         y = @yposition-8
-        y-=8 if SHOWHPBARS
+        y-=8 if SHOW_HP_BARS
         @sprites["pokeicon#{i}"]=IconSprite.new(x,y,@viewport1)
       end
       refreshPartyIcons
 
-      if SHOWHPBARS
+      if SHOW_HP_BARS
         borderWidth = 36
         borderHeight = 10
         fillWidth = 32
@@ -134,14 +144,14 @@ class Spriteset_Map
         @sprites["overlay"].bitmap.clear
       else
         width = Graphics.width
-        @sprites["overlay"] = BitmapSprite.new(width,BARHEIGHT,@viewport1)
+        @sprites["overlay"] = BitmapSprite.new(width,BAR_HEIGHT,@viewport1)
         @sprites["overlay"].y = @yposition
       end
 
       xposition = Graphics.width-64
       textPositions=[
-        [@currentTexts[0],xposition,0,2,baseColor,shadowColor],
-        [@currentTexts[1],xposition,32,2,baseColor,shadowColor]
+        [@currentTexts[0],xposition,6,2,baseColor,shadowColor],
+        [@currentTexts[1],xposition,38,2,baseColor,shadowColor]
       ]
 
       pbSetSystemFont(@sprites["overlay"].bitmap)
@@ -159,14 +169,14 @@ class Spriteset_Map
 
     def refreshPartyIcons
       for i in 0...6
-        partyMemberExists = $Trainer.party.size > i
+        partyMemberExists = $player.party.size > i
         partySpecie = 0
         partyForm = 0
         partyIsEgg = false
         if partyMemberExists
-          partySpecie = $Trainer.party[i].species
-          partyForm = $Trainer.party[i].form
-          partyIsEgg = $Trainer.party[i].egg?
+          partySpecie = $player.party[i].species
+          partyForm = $player.party[i].form
+          partyIsEgg = $player.party[i].egg?
         end
         refresh = (
           @partySpecies[i]!=partySpecie || 
@@ -179,7 +189,7 @@ class Spriteset_Map
           @partyIsEgg[i] = partyIsEgg
           if partyMemberExists
             pokemonIconFile = GameData::Species.icon_filename_from_pokemon(
-              $Trainer.party[i]
+              $player.party[i]
             )
             @sprites["pokeicon#{i}"].setBitmap(pokemonIconFile)
             @sprites["pokeicon#{i}"].src_rect=Rect.new(0,0,64,64)
@@ -193,10 +203,10 @@ class Spriteset_Map
       for i in 0...6
         hp = 0
         totalhp = 0
-        hasHP = i<$Trainer.party.size && !$Trainer.party[i].egg?
+        hasHP = i<$player.party.size && !$player.party[i].egg?
         if hasHP
-          hp = $Trainer.party[i].hp
-          totalhp = $Trainer.party[i].totalhp
+          hp = $player.party[i].hp
+          totalhp = $player.party[i].totalhp
         end
 
         lastTimeWasHP = @partyTotalHP[i] != 0
@@ -238,7 +248,7 @@ class Spriteset_Map
           create
         else
           updateHUDContent = (
-            FRAMESPERUPDATE<=1 || Graphics.frame_count%FRAMESPERUPDATE==0
+            FRAMES_PER_UPDATE<=1 || Graphics.frame_count%FRAMES_PER_UPDATE==0
           )
           if updateHUDContent
             newTexts = textsDefined
@@ -247,7 +257,7 @@ class Spriteset_Map
               drawText
             end
             refreshPartyIcons
-            refreshHPBars if SHOWHPBARS
+            refreshHPBars if SHOW_HP_BARS
           end
         end
         pbUpdateSpriteHash(@sprites)
@@ -266,6 +276,7 @@ class Spriteset_Map
   alias :updateOldFL :update
 
   def initialize(map=nil)
+    $player = $Trainer if !$player # For compatibility with v20 and older
     initializeOldFL(map)
   end
 
