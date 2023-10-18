@@ -2,8 +2,8 @@
 # * Simple HUD - by FL (Credits will be apreciated)
 #===============================================================================
 #
-# This script is for Pokémon Essentials. It displays a HUD with the party icons,
-# HP bars, tone (for status) and some small text.
+# This script is for Pokémon Essentials. It displays a HUD with the party icons
+# (with tones for status), HP bars and some small text.
 #
 #== INSTALLATION ===============================================================
 #
@@ -14,7 +14,7 @@
 if defined?(PluginManager) && !PluginManager.installed?("Simple HUD")
   PluginManager.register({                                                 
     :name    => "Simple HUD",                                        
-    :version => "3.0",                                                     
+    :version => "3.0.1",                                                     
     :link    => "https://www.pokecommunity.com/showthread.php?t=390640",             
     :credits => "FL"
   })
@@ -212,7 +212,7 @@ class HUD
   def refreshAllPokemon
     for i in 0...6
       if $player && $player.party.size > i
-        refreshPokemon(i, PokemonData.new($Trainer.party[i]))
+        refreshPokemon(i, PokemonData.new($player.party[i]))
       else
         refreshPokemon(i, nil)
       end
